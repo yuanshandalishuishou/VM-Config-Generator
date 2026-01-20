@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚拟机配置生成器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+        
+        .option-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 1.5rem;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .type-selector {
+            cursor: pointer;
+            padding: 20px;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .type-selector:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .type-selector.active {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .step.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .step-line {
+            flex: 1;
+            height: 3px;
+            background: #e9ecef;
+            margin: auto 0;
+            max-width: 100px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .hero-section {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step active">1</div>
+                <div class="step-line"></div>
+                <div class="step">2</div>
+                <div class="step-line"></div>
+                <div class="step">3</div>
+            </div>
+            
+            <!-- 标题部分 -->
+            <div class="hero-section">
+                <h1 class="display-4 fw-bold">
+                    <i class="bi bi-cpu"></i> 虚拟机配置生成器
+                </h1>
+                <p class="lead">创建、编辑和导出虚拟机配置文件的一站式解决方案</p>
+                <div class="mt-4">
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="bi bi-check-circle me-1"></i> PVE (.conf)
+                    </span>
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="bi bi-check-circle me-1"></i> Libvirt (.xml)
+                    </span>
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="bi bi-check-circle me-1"></i> 一键脚本
+                    </span>
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-check-circle me-1"></i> 配置文件导入
+                    </span>
+                </div>
+            </div>
+            
+            <!-- 功能简介 -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card option-card">
+                        <div class="card-header text-center">
+                            <i class="bi bi-pencil-square display-6"></i>
+                            <h4 class="mt-2">创建新配置</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>从零开始创建虚拟机配置，提供详细的配置选项和默认值。</p>
+                            <ul class="feature-list">
+                                <li><i class="bi bi-check2"></i> 完整的配置选项</li>
+                                <li><i class="bi bi-check2"></i> 智能默认值</li>
+                                <li><i class="bi bi-check2"></i> 实时预览</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card option-card">
+                        <div class="card-header text-center">
+                            <i class="bi bi-upload display-6"></i>
+                            <h4 class="mt-2">导入现有配置</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>从现有的PVE或Libvirt配置文件导入，快速修改和导出。</p>
+                            <ul class="feature-list">
+                                <li><i class="bi bi-check2"></i> 支持.conf文件</li>
+                                <li><i class="bi bi-check2"></i> 支持.xml文件</li>
+                                <li><i class="bi bi-check2"></i> 智能解析</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card option-card">
+                        <div class="card-header text-center">
+                            <i class="bi bi-gear display-6"></i>
+                            <h4 class="mt-2">生成部署脚本</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>生成一键部署脚本，自动创建虚拟机和配置文件。</p>
+                            <ul class="feature-list">
+                                <li><i class="bi bi-check2"></i> Bash脚本</li>
+                                <li><i class="bi bi-check2"></i> 错误处理</li>
+                                <li><i class="bi bi-check2"></i> 详细日志</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 配置类型选择 -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>选择配置类型</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for key, config_type in config_types.items() %}
+                        <div class="col-md-6 mb-3">
+                            <div class="type-selector" data-type="{{ key }}" onclick="selectType('{{ key }}')">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="bi bi-file-earmark-text display-5 text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5>{{ config_type.name }}</h5>
+                                        <p class="text-muted mb-0">
+                                            生成{{ config_type.name }}格式的配置文件
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="text-center mt-4">
+                <button class="btn btn-primary-custom btn-lg me-3" id="btn-create">
+                    <i class="bi bi-plus-circle me-2"></i>创建新配置
+                </button>
+                <button class="btn btn-outline-primary btn-lg" id="btn-import">
+                    <i class="bi bi-upload me-2"></i>导入配置文件
+                </button>
+            </div>
+            
+            <!-- 使用说明 -->
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>使用说明</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>创建新配置：</h5>
+                            <ol>
+                                <li>选择配置类型（PVE或Libvirt）</li>
+                                <li>在编辑器中修改配置参数</li>
+                                <li>预览生成的配置文件</li>
+                                <li>选择导出格式（脚本或配置文件）</li>
+                                <li>下载并使用</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>导入现有配置：</h5>
+                            <ol>
+                                <li>上传.conf或.xml配置文件</li>
+                                <li>系统自动解析配置</li>
+                                <li>在编辑器中修改配置</li>
+                                <li>选择导出格式</li>
+                                <li>下载并使用</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let selectedType = 'pve';
+        
+        function selectType(type) {
+            selectedType = type;
+            
+            // 更新UI
+            document.querySelectorAll('.type-selector').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            event.currentTarget.classList.add('active');
+        }
+        
+        document.getElementById('btn-create').addEventListener('click', function() {
+            window.location.href = `/editor?type=${selectedType}`;
+        });
+        
+        document.getElementById('btn-import').addEventListener('click', function() {
+            window.location.href = '/import';
+        });
+        
+        // 初始化选择第一个类型
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstType = document.querySelector('.type-selector');
+            if (firstType) {
+                firstType.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置编辑器 - 虚拟机配置生成器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .editor-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .editor-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .config-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .section-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--light-bg);
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .section-header.collapsed {
+            margin-bottom: 0;
+        }
+        
+        .section-content {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+        
+        .section-content.collapsed {
+            max-height: 0;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            padding: 10px 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .config-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .tab-nav {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .tab-nav-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+        
+        .tab-nav-item:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-nav-item.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .action-buttons {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .form-check-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .config-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+        
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .editor-container {
+                padding: 10px;
+            }
+            
+            .tab-nav-item {
+                padding: 10px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- 头部 -->
+        <div class="editor-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-gear-wide-connected me-2"></i>配置编辑器
+                    </h2>
+                    <p class="mb-0">当前类型: {{ config_type|upper }} 配置文件</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-light me-2">
+                        <i class="bi bi-arrow-left me-1"></i>返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签导航 -->
+        <div class="tab-nav">
+            <div class="tab-nav-item active" data-tab="config">配置编辑</div>
+            <div class="tab-nav-item" data-tab="preview">配置预览</div>
+            <div class="tab-nav-item" data-tab="export">导出选项</div>
+        </div>
+        
+        <!-- 配置编辑标签页 -->
+        <div id="tab-config" class="tab-content">
+            <!-- 操作工具栏 -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <button class="btn btn-outline-primary btn-sm me-2" id="btn-load-default">
+                        <i class="bi bi-arrow-clockwise me-1"></i>加载默认值
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="btn-reset-section">
+                        <i class="bi bi-x-circle me-1"></i>重置当前节
+                    </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="me-2">自动保存:</span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="auto-save" checked>
+                        <label class="form-check-label" for="auto-save"></label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 配置节 -->
+            <div id="config-sections">
+                {% for section_id, section in sections.items() %}
+                <div class="config-section" id="section-{{ section_id }}">
+                    <div class="section-header" data-section="{{ section_id }}">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-chevron-down me-2"></i>
+                            <h5 class="mb-0">{{ section.name }}</h5>
+                            <span class="config-badge bg-info ms-2">
+                                {{ section.options|length }} 项
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-muted small">点击展开/收起</span>
+                        </div>
+                    </div>
+                    
+                    <div class="section-content" id="content-{{ section_id }}">
+                        <div class="row">
+                            {% for option in section.options %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="form-group">
+                                    <label for="{{ option.key }}" class="form-label">
+                                        {{ option.label }}
+                                        {% if option.key in ['vmid', 'name', 'memory', 'cores', 'sockets'] %}
+                                        <span class="required"></span>
+                                        {% endif %}
+                                    </label>
+                                    
+                                    {% if option.type == 'text' %}
+                                    <input type="text" 
+                                           class="form-control config-input" 
+                                           id="{{ option.key }}" 
+                                           name="{{ option.key }}"
+                                           value="{{ config_data.get(option.key, option.default) }}"
+                                           placeholder="{{ option.get('placeholder', '') }}"
+                                           data-type="{{ option.type }}"
+                                           {% if option.key in ['vmid', 'name', 'memory', 'cores', 'sockets'] %}required{% endif %}>
+                                    
+                                    {% elif option.type == 'number' %}
+                                    <input type="number" 
+                                           class="form-control config-input" 
+                                           id="{{ option.key }}" 
+                                           name="{{ option.key }}"
+                                           value="{{ config_data.get(option.key, option.default) }}"
+                                           min="{{ option.get('min', '0') }}"
+                                           max="{{ option.get('max', '999999') }}"
+                                           step="{{ option.get('step', '1') }}"
+                                           data-type="{{ option.type }}"
+                                           {% if option.key in ['vmid', 'name', 'memory', 'cores', 'sockets'] %}required{% endif %}>
+                                    
+                                    {% elif option.type == 'select' %}
+                                    <select class="form-select config-input" 
+                                            id="{{ option.key }}" 
+                                            name="{{ option.key }}"
+                                            data-type="{{ option.type }}">
+                                        {% for opt_value in option.options %}
+                                        <option value="{{ opt_value }}" 
+                                                {% if config_data.get(option.key, option.default) == opt_value %}selected{% endif %}>
+                                            {{ opt_value }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    
+                                    {% elif option.type == 'checkbox' %}
+                                    <div class="form-check">
+                                        <input class="form-check-input config-input" 
+                                               type="checkbox" 
+                                               id="{{ option.key }}" 
+                                               name="{{ option.key }}"
+                                               value="1"
+                                               data-type="{{ option.type }}"
+                                               {% if config_data.get(option.key, option.default) == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ option.key }}">
+                                            启用
+                                        </label>
+                                    </div>
+                                    
+                                    {% elif option.type == 'textarea' %}
+                                    <textarea class="form-control config-input" 
+                                              id="{{ option.key }}" 
+                                              name="{{ option.key }}"
+                                              rows="3"
+                                              data-type="{{ option.type }}">{{ config_data.get(option.key, option.default) }}</textarea>
+                                    
+                                    {% endif %}
+                                    
+                                    {% if option.get('help') %}
+                                    <div class="help-text">{{ option.help }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 自定义配置项 -->
+            <div class="config-section">
+                <div class="section-header" data-section="custom">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-chevron-down me-2"></i>
+                        <h5 class="mb-0">自定义配置项</h5>
+                        <span class="config-badge bg-warning ms-2">高级</span>
+                    </div>
+                </div>
+                
+                <div class="section-content" id="content-custom">
+                    <div class="mb-3">
+                        <p class="text-muted">添加未在以上列表中显示的配置项</p>
+                        <div id="custom-fields">
+                            <!-- 动态添加的自定义字段 -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-custom">
+                            <i class="bi bi-plus-circle me-1"></i>添加自定义项
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 配置预览标签页 -->
+        <div id="tab-preview" class="tab-content" style="display: none;">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="preview-header">
+                        <h5>PVE配置预览 (.conf)</h5>
+                        <button class="btn btn-sm btn-outline-primary" id="btn-preview-pve">
+                            <i class="bi bi-arrow-repeat me-1"></i>刷新预览
+                        </button>
+                    </div>
+                    <div class="config-preview" id="preview-pve">
+                        <!-- PVE配置预览内容 -->
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="preview-header">
+                        <h5>Libvirt配置预览 (.xml)</h5>
+                        <button class="btn btn-sm btn-outline-primary" id="btn-preview-libvirt">
+                            <i class="bi bi-arrow-repeat me-1"></i>刷新预览
+                        </button>
+                    </div>
+                    <div class="config-preview" id="preview-libvirt">
+                        <!-- Libvirt配置预览内容 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 导出选项标签页 -->
+        <div id="tab-export" class="tab-content" style="display: none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="config-section">
+                        <h5>导出选项</h5>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label">导出格式</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input export-format" type="radio" 
+                                       name="export-format" id="export-pve" value="pve" checked>
+                                <label class="form-check-label" for="export-pve">
+                                    <strong>Proxmox VE (.conf)</strong>
+                                    <p class="text-muted small mb-0">生成PVE虚拟机配置文件</p>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input export-format" type="radio" 
+                                       name="export-format" id="export-libvirt" value="libvirt">
+                                <label class="form-check-label" for="export-libvirt">
+                                    <strong>Libvirt (.xml)</strong>
+                                    <p class="text-muted small mb-0">生成Libvirt XML配置文件</p>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input export-format" type="radio" 
+                                       name="export-format" id="export-script" value="script">
+                                <label class="form-check-label" for="export-script">
+                                    <strong>一键部署脚本 (.sh)</strong>
+                                    <p class="text-muted small mb-0">生成自动部署的Bash脚本</p>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-4" id="script-options" style="display: none;">
+                            <label class="form-label">脚本目标平台</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input script-target" type="radio" 
+                                       name="script-target" id="script-pve" value="pve" checked>
+                                <label class="form-check-label" for="script-pve">
+                                    Proxmox VE
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input script-target" type="radio" 
+                                       name="script-target" id="script-libvirt" value="libvirt">
+                                <label class="form-check-label" for="script-libvirt">
+                                    Libvirt (KVM/QEMU)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="export-filename" class="form-label">输出文件名</label>
+                            <input type="text" class="form-control" id="export-filename" 
+                                   value="vm-configuration">
+                            <div class="help-text">不需要包含扩展名，系统会自动添加</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="config-section">
+                        <h5>导出说明</h5>
+                        
+                        <div id="export-info-pve">
+                            <h6>PVE配置文件 (.conf)</h6>
+                            <ul>
+                                <li>直接复制到 <code>/etc/pve/qemu-server/</code> 目录</li>
+                                <li>使用 <code>qm create</code> 命令创建虚拟机</li>
+                                <li>需要手动创建虚拟磁盘</li>
+                                <li>适用于已有PVE环境</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="export-info-libvirt" style="display: none;">
+                            <h6>Libvirt配置文件 (.xml)</h6>
+                            <ul>
+                                <li>使用 <code>virsh define [文件]</code> 导入</li>
+                                <li>使用 <code>virsh start [虚拟机名]</code> 启动</li>
+                                <li>需要手动创建虚拟磁盘</li>
+                                <li>适用于KVM/QEMU环境</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="export-info-script" style="display: none;">
+                            <h6>一键部署脚本 (.sh)</h6>
+                            <ul>
+                                <li>自动创建配置文件和虚拟磁盘</li>
+                                <li>包含错误处理和详细日志</li>
+                                <li>需要root权限执行</li>
+                                <li>支持多种磁盘格式转换</li>
+                                <li>自动备份和验证</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部操作按钮 -->
+        <div class="action-buttons">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-secondary" id="btn-back">
+                        <i class="bi bi-arrow-left me-1"></i>返回
+                    </button>
+                </div>
+                <div>
+                    <button class="btn btn-primary-custom me-2" id="btn-save">
+                        <i class="bi bi-save me-1"></i>保存配置
+                    </button>
+                    <button class="btn btn-success" id="btn-export">
+                        <i class="bi bi-download me-1"></i>导出配置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 全局变量
+        let currentConfig = {{ config_data|tojson }};
+        let configType = '{{ config_type }}';
+        let autoSaveEnabled = true;
+        let autoSaveTimer = null;
+        
+        // DOM元素
+        const tabNavItems = document.querySelectorAll('.tab-nav-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const configInputs = document.querySelectorAll('.config-input');
+        const sectionHeaders = document.querySelectorAll('.section-header');
+        const exportFormatRadios = document.querySelectorAll('.export-format');
+        const scriptTargetRadios = document.querySelectorAll('.script-target');
+        const exportInfoDivs = {
+            'pve': document.getElementById('export-info-pve'),
+            'libvirt': document.getElementById('export-info-libvirt'),
+            'script': document.getElementById('export-info-script')
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化标签页
+            initTabs();
+            
+            // 初始化折叠面板
+            initSections();
+            
+            // 绑定输入事件
+            bindInputEvents();
+            
+            // 绑定按钮事件
+            bindButtonEvents();
+            
+            // 绑定导出选项事件
+            bindExportEvents();
+            
+            // 加载预览
+            loadPreviews();
+            
+            // 恢复自动保存状态
+            const autoSaveCheckbox = document.getElementById('auto-save');
+            if (autoSaveCheckbox) {
+                autoSaveCheckbox.addEventListener('change', function() {
+                    autoSaveEnabled = this.checked;
+                });
+            }
+        });
+        
+        // 初始化标签页
+        function initTabs() {
+            tabNavItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 更新标签导航
+                    tabNavItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 显示对应内容
+                    tabContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    document.getElementById(`tab-${tabId}`).style.display = 'block';
+                });
+            });
+        }
+        
+        // 初始化折叠面板
+        function initSections() {
+            sectionHeaders.forEach(header => {
+                const sectionId = header.getAttribute('data-section');
+                const content = document.getElementById(`content-${sectionId}`);
+                
+                // 默认展开第一个节
+                if (sectionId === 'basic') {
+                    header.querySelector('i').classList.remove('bi-chevron-down');
+                    header.querySelector('i').classList.add('bi-chevron-up');
+                    content.classList.remove('collapsed');
+                } else {
+                    header.classList.add('collapsed');
+                    content.classList.add('collapsed');
+                }
+                
+                header.addEventListener('click', function() {
+                    const isCollapsed = content.classList.contains('collapsed');
+                    
+                    // 更新图标
+                    const icon = this.querySelector('i');
+                    if (isCollapsed) {
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-up');
+                        content.classList.remove('collapsed');
+                        this.classList.remove('collapsed');
+                    } else {
+                        icon.classList.remove('bi-chevron-up');
+                        icon.classList.add('bi-chevron-down');
+                        content.classList.add('collapsed');
+                        this.classList.add('collapsed');
+                    }
+                });
+            });
+        }
+        
+        // 绑定输入事件
+        function bindInputEvents() {
+            configInputs.forEach(input => {
+                const inputType = input.getAttribute('data-type');
+                
+                if (inputType === 'checkbox') {
+                    input.addEventListener('change', function() {
+                        updateConfigValue(this.name, this.checked ? '1' : '0');
+                    });
+                } else {
+                    input.addEventListener('input', function() {
+                        if (autoSaveTimer) {
+                            clearTimeout(autoSaveTimer);
+                        }
+                        
+                        autoSaveTimer = setTimeout(() => {
+                            updateConfigValue(this.name, this.value);
+                        }, 500);
+                    });
+                }
+            });
+        }
+        
+        // 绑定按钮事件
+        function bindButtonEvents() {
+            // 加载默认值
+            document.getElementById('btn-load-default').addEventListener('click', loadDefaultConfig);
+            
+            // 重置当前节
+            document.getElementById('btn-reset-section').addEventListener('click', resetCurrentSection);
+            
+            // 添加自定义字段
+            document.getElementById('btn-add-custom').addEventListener('click', addCustomField);
+            
+            // 保存配置
+            document.getElementById('btn-save').addEventListener('click', saveConfig);
+            
+            // 导出配置
+            document.getElementById('btn-export').addEventListener('click', exportConfig);
+            
+            // 返回按钮
+            document.getElementById('btn-back').addEventListener('click', function() {
+                if (confirm('未保存的更改可能会丢失，确定要返回吗？')) {
+                    window.location.href = '/';
+                }
+            });
+            
+            // 预览按钮
+            document.getElementById('btn-preview-pve').addEventListener('click', function() {
+                loadPreview('pve');
+            });
+            
+            document.getElementById('btn-preview-libvirt').addEventListener('click', function() {
+                loadPreview('libvirt');
+            });
+        }
+        
+        // 绑定导出选项事件
+        function bindExportEvents() {
+            exportFormatRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const format = this.value;
+                    
+                    // 显示/隐藏脚本选项
+                    const scriptOptions = document.getElementById('script-options');
+                    if (format === 'script') {
+                        scriptOptions.style.display = 'block';
+                    } else {
+                        scriptOptions.style.display = 'none';
+                    }
+                    
+                    // 更新导出说明
+                    Object.keys(exportInfoDivs).forEach(key => {
+                        exportInfoDivs[key].style.display = key === format ? 'block' : 'none';
+                    });
+                });
+            });
+            
+            scriptTargetRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateExportInfo();
+                });
+            });
+        }
+        
+        // 更新配置值
+        function updateConfigValue(key, value) {
+            currentConfig[key] = value;
+            
+            if (autoSaveEnabled) {
+                saveConfigToServer();
+            }
+        }
+        
+        // 加载默认配置
+        async function loadDefaultConfig() {
+            if (confirm('这将重置所有配置为默认值，确定继续吗？')) {
+                try {
+                    const response = await fetch(`/api/load-default?type=${configType}`);
+                    const data = await response.json();
+                    
+                    if (data.config) {
+                        currentConfig = data.config;
+                        
+                        // 更新表单
+                        configInputs.forEach(input => {
+                            const key = input.name;
+                            const inputType = input.getAttribute('data-type');
+                            
+                            if (key in currentConfig) {
+                                if (inputType === 'checkbox') {
+                                    input.checked = currentConfig[key] === '1';
+                                } else {
+                                    input.value = currentConfig[key];
+                                }
+                            }
+                        });
+                        
+                        // 重新加载预览
+                        loadPreviews();
+                        
+                        alert('默认配置已加载');
+                    }
+                } catch (error) {
+                    alert('加载默认配置失败: ' + error.message);
+                }
+            }
+        }
+        
+        // 重置当前节
+        function resetCurrentSection() {
+            const activeSection = document.querySelector('.section-header:not(.collapsed)');
+            if (!activeSection) {
+                alert('请先展开一个配置节');
+                return;
+            }
+            
+            const sectionId = activeSection.getAttribute('data-section');
+            if (confirm(`确定要重置"${sectionId}"节的配置吗？`)) {
+                // 重置该节的所有输入
+                const sectionInputs = document.querySelectorAll(`#content-${sectionId} .config-input`);
+                
+                sectionInputs.forEach(input => {
+                    const key = input.name;
+                    const inputType = input.getAttribute('data-type');
+                    
+                    // 查找默认值
+                    let defaultValue = '';
+                    for (const section of Object.values({{ sections|tojson }})) {
+                        for (const opt of section.options) {
+                            if (opt.key === key) {
+                                defaultValue = opt.default || '';
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (inputType === 'checkbox') {
+                        input.checked = defaultValue === '1';
+                        updateConfigValue(key, defaultValue);
+                    } else {
+                        input.value = defaultValue;
+                        updateConfigValue(key, defaultValue);
+                    }
+                });
+                
+                alert('配置节已重置');
+            }
+        }
+        
+        // 添加自定义字段
+        function addCustomField() {
+            const customFields = document.getElementById('custom-fields');
+            
+            const fieldId = 'custom-' + Date.now();
+            const fieldHtml = `
+                <div class="row mb-2" id="${fieldId}">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control custom-key" placeholder="配置键名">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control custom-value" placeholder="配置值">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeCustomField('${fieldId}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            customFields.insertAdjacentHTML('beforeend', fieldHtml);
+        }
+        
+        // 移除自定义字段
+        function removeCustomField(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.remove();
+            }
+        }
+        
+        // 保存配置到服务器
+        async function saveConfigToServer() {
+            try {
+                // 收集自定义字段
+                collectCustomFields();
+                
+                const response = await fetch('/api/save-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        config: currentConfig,
+                        type: configType
+                    })
+                });
+                
+                const data = await response.json();
+                return data.success;
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                return false;
+            }
+        }
+        
+        // 收集自定义字段
+        function collectCustomFields() {
+            const customKeys = document.querySelectorAll('.custom-key');
+            const customValues = document.querySelectorAll('.custom-value');
+            
+            customKeys.forEach((keyInput, index) => {
+                const key = keyInput.value.trim();
+                const value = customValues[index].value.trim();
+                
+                if (key && value) {
+                    currentConfig[key] = value;
+                }
+            });
+        }
+        
+        // 保存配置
+        async function saveConfig() {
+            // 收集自定义字段
+            collectCustomFields();
+            
+            const success = await saveConfigToServer();
+            if (success) {
+                alert('配置保存成功');
+            } else {
+                alert('配置保存失败');
+            }
+        }
+        
+        // 导出配置
+        async function exportConfig() {
+            // 收集自定义字段
+            collectCustomFields();
+            
+            // 获取导出选项
+            const exportFormat = document.querySelector('input[name="export-format"]:checked').value;
+            const scriptTarget = exportFormat === 'script' 
+                ? document.querySelector('input[name="script-target"]:checked').value
+                : exportFormat;
+            const filename = document.getElementById('export-filename').value.trim() || 'vm-configuration';
+            
+            try {
+                // 保存配置
+                await saveConfigToServer();
+                
+                // 发送导出请求
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        config: currentConfig,
+                        output_type: exportFormat === 'script' ? 'script' : exportFormat,
+                        output_format: scriptTarget
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('导出失败');
+                }
+                
+                // 创建下载链接
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                // 设置下载文件名
+                let downloadName = filename;
+                if (exportFormat === 'pve') {
+                    downloadName += '.conf';
+                } else if (exportFormat === 'libvirt') {
+                    downloadName += '.xml';
+                } else if (exportFormat === 'script') {
+                    downloadName += '.sh';
+                }
+                
+                a.href = url;
+                a.download = downloadName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                alert('导出失败: ' + error.message);
+            }
+        }
+        
+        // 加载预览
+        async function loadPreviews() {
+            loadPreview('pve');
+            loadPreview('libvirt');
+        }
+        
+        // 加载特定格式的预览
+        async function loadPreview(format) {
+            // 收集自定义字段
+            collectCustomFields();
+            
+            try {
+                const response = await fetch('/api/preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        config: currentConfig,
+                        format: format
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    const previewElement = document.getElementById(`preview-${format}`);
+                    if (previewElement) {
+                        previewElement.textContent = data.content;
+                    }
+                }
+            } catch (error) {
+                console.error('加载预览失败:', error);
+            }
+        }
+        
+        // 更新导出信息
+        function updateExportInfo() {
+            // 可以根据选择的脚本目标更新更多信息
+        }
+    </script>
+</body>
+</html>
