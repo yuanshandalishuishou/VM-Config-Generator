@@ -1,19 +1,19 @@
-# ´´½¨ÏîÄ¿Ä¿Â¼
+# åˆ›å»ºé¡¹ç›®ç›®å½•
 mkdir -p vm-config-generator/{templates,config_templates,converters}
 cd vm-config-generator
 
-# ´´½¨ÉÏÊöËùÓĞÎÄ¼ş
+# åˆ›å»ºä¸Šè¿°æ‰€æœ‰æ–‡ä»¶
 # app.py, templates/index.html, templates/editor.html, templates/import.html
 # requirements.txt, Dockerfile, converters/pve_parser.py, converters/xml_parser.py
 
-# ¹¹½¨Docker¾µÏñ
+# æ„å»ºDockeré•œåƒ
 docker build -t vm-config-generator .
 
-# ²é¿´¾µÏñ´óĞ¡
+# æŸ¥çœ‹é•œåƒå¤§å°
 docker images vm-config-generator
 
 
-# ÔËĞĞÈİÆ÷
+# è¿è¡Œå®¹å™¨
 docker run -d \
   --name vm-config-generator \
   -p 34567:34567 \
@@ -21,57 +21,8 @@ docker run -d \
   -e SECRET_KEY=your-secret-key-here \
   vm-config-generator
 
-# ²é¿´ÈÕÖ¾
+# æŸ¥çœ‹æ—¥å¿—
 docker logs -f vm-config-generator
 
 
-#·ÃÎÊÓ¦ÓÃ´ò¿ªä¯ÀÀÆ÷·ÃÎÊ£ºhttp://localhost:34567
-
-#¹¦ÄÜÌØµã
-ÍêÕûµÄÅäÖÃ±à¼­£º
-
-°´Àà±ğ×éÖ¯µÄÅäÖÃÑ¡Ïî£¨»ù±¾¡¢Æô¶¯¡¢´ÅÅÌ¡¢ÍøÂç¡¢ÏÔÊ¾¡¢¸ß¼¶£©
-
-Ö§³ÖËùÓĞ³£¼ûµÄĞéÄâ»úÅäÖÃ²ÎÊı
-
-ÏêÏ¸µÄÄ¬ÈÏÖµºÍ°ïÖúÎÄ±¾
-
-Áé»îµÄµ¼Èë¹¦ÄÜ£º
-
-Ö§³Ö´ÓPVE .confÎÄ¼şµ¼Èë
-
-Ö§³Ö´ÓLibvirt .xmlÎÄ¼şµ¼Èë
-
-ÖÇÄÜ½âÎöÅäÖÃ²ÎÊı
-
-¶àÖÖµ¼³ö¸ñÊ½£º
-
-Éú³ÉPVE .confÅäÖÃÎÄ¼ş
-
-Éú³ÉLibvirt .xmlÅäÖÃÎÄ¼ş
-
-Éú³ÉÒ»¼ü²¿ÊğBash½Å±¾
-
-ÊµÊ±Ô¤ÀÀ£º
-
-ÊµÊ±Ô¤ÀÀÉú³ÉµÄÅäÖÃÎÄ¼ş
-
-Ö§³ÖÁ½ÖÖ¸ñÊ½µÄÔ¤ÀÀ
-
-Ò»¼ü½Å±¾¹¦ÄÜ£º
-
-×Ô¶¯´´½¨ĞéÄâ»úºÍÅäÖÃÎÄ¼ş
-
-°üº¬´íÎó´¦ÀíºÍÏêÏ¸ÈÕÖ¾
-
-Ö§³Ö´ÅÅÌ´´½¨ºÍÍøÂçÅäÖÃ
-
-ÓÃ»§ÓÑºÃµÄ½çÃæ£º
-
-ÏìÓ¦Ê½Éè¼Æ£¬Ö§³ÖÒÆ¶¯Éè±¸
-
-Ö±¹ÛµÄ±êÇ©Ò³ºÍÕÛµşÃæ°å
-
-×Ô¶¯±£´æ¹¦ÄÜ
-
-Õâ¸öĞéÄâ»úÅäÖÃÉú³ÉÆ÷Ìá¹©ÁËÒ»¸öÍêÕûµÄ½â¾ö·½°¸£¬ÈÃÓÃ»§¿ÉÒÔ´ÓÁã¿ªÊ¼´´½¨ĞéÄâ»úÅäÖÃ£¬Ò²¿ÉÒÔ´ÓÏÖÓĞÅäÖÃµ¼ÈëĞŞ¸Ä£¬×îºóÉú³É¿ÉÒÔÖ±½ÓÊ¹ÓÃµÄÅäÖÃÎÄ¼ş»ò²¿Êğ½Å±¾
+#è®¿é—®åº”ç”¨æ‰“å¼€æµè§ˆå™¨è®¿é—®ï¼šhttp://localhost:34567
