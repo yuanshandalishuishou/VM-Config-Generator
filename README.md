@@ -45,8 +45,8 @@
 
 ```bash
 # 1. 克隆或下载项目代码
-git clone [https://github.com/yourusername/vm-config-generator.git](https://github.com/yuanshandalishuishou/VM-Config-Generator)
-cd vm-config-generator
+git clone https://github.com/yuanshandalishuishou/VM-Config-Generator.git
+cd VM-Config-Generator
 
 # 2. 构建Docker镜像
 docker build -t vm-config-generator .
